@@ -33,3 +33,9 @@
 ├── README.md             # Main documentation for project overview, setup, and usage
 └── LICENSE               # License file (if applicable)
 ```
+
+
+## References
+
+Articles:
+- https://medium.com/geekculture/airflow-vs-prefect-vs-kestra-which-is-best-for-building-advanced-data-pipelines-40cfbddf9697
