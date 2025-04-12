@@ -1,9 +1,16 @@
 import os
 import sys
 import time
+import glob
+
 from concurrent.futures import ThreadPoolExecutor
 from google.cloud import storage
 from google.api_core.exceptions import NotFound, Forbidden
+
+from src.helper_functions import get_root_project_dir
+
+ROOT_PROJECT_DIR = get_root_project_dir()
+
 
 class GCSUploader:
     """A class to handle file uploads to Google Cloud Storage."""
@@ -87,12 +94,36 @@ def upload_files(file_paths, bucket_name, credentials_file=None, max_retries=3, 
         executor.map(uploader.upload_file, file_paths, [max_retries]*len(file_paths))
 
 
+def get_file_paths(directory: str, pattern: str = "*.csv") -> list:
+    """Get a list of file paths matching the given pattern in the specified directory."""
+
+    return glob.glob(os.path.join(directory, pattern))
+
+
+def delete_local_files(file_paths: list):
+    """Delete local files after uploading to GCS."""
+
+    print("Deleting local files...")
+
+    for file_path in file_paths:
+        try:
+            os.remove(file_path)
+            print(f"Deleted local file: {file_path}")
+        except Exception as e:
+            print(f"Failed to delete {file_path}: {e}")
+
+
 def load_to_gcs():
-    file_paths = ["../data/2025041114H_events.csv"] 
+
+    file_paths = get_file_paths(os.path.join(ROOT_PROJECT_DIR, "data"), "*.csv")
     bucket_name = "ticketmaster_bucket"
 
-    # Upload files
-    upload_files(file_paths, bucket_name, max_threads=5)
+    if file_paths:
+        # Upload files to GCS and delete local files
+        upload_files(file_paths, bucket_name, max_threads=5)
+        delete_local_files(file_paths)
+    else:
+        print("No CSV files found to upload.")
 
 
 if __name__ == '__main__':

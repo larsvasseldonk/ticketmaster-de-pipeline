@@ -1,10 +1,13 @@
-from google.cloud import bigquery
+from google.cloud import bigquery, storage
 from google.api_core.exceptions import GoogleAPICallError, NotFound, BadRequest
+from concurrent.futures import ThreadPoolExecutor
 
 import logging
+import datetime
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
+
 
 class BigQueryLoader:
     """A class to handle loading data into BigQuery from Google Cloud Storage."""
@@ -26,7 +29,7 @@ class BigQueryLoader:
         """
 
         table_ref = f"{self.project_id}.{dataset_id}.{table_id}"
-        logging.info(f"Starting data load from {source_uri} to BigQuery table {table_ref}.")
+        logging.info(f"Starting data load from {source_uri} to BigQuery table {table_ref}...")
 
         job_config = bigquery.LoadJobConfig(
             source_format=bigquery.SourceFormat.CSV,
@@ -52,6 +55,24 @@ class BigQueryLoader:
             logging.error(f"Unexpected error occurred: {e}")
 
 
+def list_csv_files(bucket_name: str) -> list:
+    """List all CSV files in the specified GCS bucket."""
+
+    datetime_today = datetime.datetime.now().strftime("%Y%m%d")
+
+    storage_client = storage.Client()
+    bucket = storage_client.get_bucket(bucket_name)
+    blobs = bucket.list_blobs()
+
+    file_paths = [
+        f"gs://{bucket_name}/{blob.name}" 
+        for blob in blobs if (blob.name.endswith(".csv")) & (blob.name.startswith(datetime_today))
+    ]
+    logging.info(f"Found {len(file_paths)} CSV files in bucket {bucket_name}.")
+
+    return file_paths
+
+
 def load_to_bq():
     """Main function to run the data loader."""
 
@@ -59,7 +80,7 @@ def load_to_bq():
     project_id = "sandbox-450016"
     dataset_id = "ticketmaster_dataset"
     table_id = "stg_hist_events"
-    source_uri = "gs://ticketmaster_bucket/2025041114H_events.csv"
+    bucket_name = "ticketmaster_bucket"
     schema = [
         bigquery.SchemaField("id", "STRING"),
         bigquery.SchemaField("name", "STRING"),
@@ -77,11 +98,19 @@ def load_to_bq():
         bigquery.SchemaField("address", "STRING"),
         bigquery.SchemaField("promotor_id", "STRING")
     ]
-    write_disposition = "WRITE_APPEND"
+    write_disposition = "WRITE_APPEND"  # Options: WRITE_APPEND, WRITE_TRUNCATE, WRITE_EMPTY
 
     # Instantiate loader and load data
     loader = BigQueryLoader(project_id)
-    loader.load_data(dataset_id, table_id, source_uri, schema, write_disposition)
+
+    file_paths = list_csv_files(bucket_name)
+
+    max_threads = 5
+    with ThreadPoolExecutor(max_threads) as executor:
+        for source_uri in file_paths:
+            # Load each CSV file to BigQuery
+            executor.submit(loader.load_data, dataset_id, table_id, source_uri, schema, write_disposition)
+
 
 if __name__ == "__main__":
     load_to_bq()
