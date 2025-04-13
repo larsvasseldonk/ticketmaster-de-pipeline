@@ -15,17 +15,17 @@ variable "region" {
 
 variable "location" {
     description = "Project Location"
-    default = "EUROPE-WEST4"
+    default = "europe-west1"
 }
 
 variable "bq_dataset_name" {
   description = "BigQuery Dataset Name"
-  default = "ticketmaster_dataset"
+  default = "ticketmaster_dataset_v2"
 }
 
 variable "gcs_bucket_name" {
   description = "Bucket Storage Name"
-  default = "ticketmaster_bucket"
+  default = "ticketmaster_bucket_v2"
 }
 
 variable "gcs_storage_class" {

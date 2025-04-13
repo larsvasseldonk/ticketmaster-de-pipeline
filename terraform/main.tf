@@ -1,5 +1,9 @@
 terraform {
   required_providers {
+    archive = {
+      source  = "hashicorp/archive"
+      version = "~> 2.2.0"
+    }
     google = {
       source  = "hashicorp/google"
       version = "6.19.0"
@@ -10,12 +14,12 @@ terraform {
 provider "google" {
 #   credentials = file(var.credentials)
   project     = var.project
-  region      = var.region
+  region      = "europe-west1"
 }
 
 resource "google_storage_bucket" "ticketmaster-bucket-450016" {
-  name          = var.gcs_bucket_name
-  location      = var.location
+  name          = "${var.project}-ticketmaster-bucket"
+  location      =  "europe-west1"
   force_destroy = true
 
   # Auto delete bucket after 10 days
@@ -29,7 +33,12 @@ resource "google_storage_bucket" "ticketmaster-bucket-450016" {
   }
 }
 
+resource "google_storage_bucket" "function_bucket" {
+    name     = "${var.project}-function-bucket"
+    location =  "europe-west1"
+}
+
 resource "google_bigquery_dataset" "ticketmaster-dataset-450016" {
   dataset_id                  = var.bq_dataset_name
-  location                    = var.location
+  location                    = "europe-west1"
 }

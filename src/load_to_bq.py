@@ -110,7 +110,3 @@ def load_to_bq():
         for source_uri in file_paths:
             # Load each CSV file to BigQuery
             executor.submit(loader.load_data, dataset_id, table_id, source_uri, schema, write_disposition)
-
-
-if __name__ == "__main__":
-    load_to_bq()

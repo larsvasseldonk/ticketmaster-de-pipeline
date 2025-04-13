@@ -7,9 +7,9 @@ from concurrent.futures import ThreadPoolExecutor
 from google.cloud import storage
 from google.api_core.exceptions import NotFound, Forbidden
 
-from src.helper_functions import get_root_project_dir
+# from src.helper_functions import get_root_project_dir
 
-ROOT_PROJECT_DIR = get_root_project_dir()
+# ROOT_PROJECT_DIR = get_root_project_dir()
 
 
 class GCSUploader:
@@ -115,7 +115,7 @@ def delete_local_files(file_paths: list):
 
 def load_to_gcs():
 
-    file_paths = get_file_paths(os.path.join(ROOT_PROJECT_DIR, "data"), "*.csv")
+    file_paths = get_file_paths("", "*.csv")
     bucket_name = "ticketmaster_bucket"
 
     if file_paths:
@@ -124,7 +124,3 @@ def load_to_gcs():
         delete_local_files(file_paths)
     else:
         print("No CSV files found to upload.")
-
-
-if __name__ == '__main__':
-    load_to_gcs()

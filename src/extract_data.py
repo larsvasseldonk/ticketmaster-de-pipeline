@@ -4,6 +4,10 @@ import os
 
 import pandas as pd
 
+# from src.helper_functions import get_root_project_dir
+
+# ROOT_PROJECT_DIR = get_root_project_dir()
+
 
 class TicketmasterAPI:
     """
@@ -114,7 +118,7 @@ class TicketmasterAPI:
     
 
 def extract_data():
-    api_key = os.environ.get("TICKETMASTER_API_KEY")
+    api_key = "xkwIHOr5jYGxFVPOCeIF9JMeP2YPjQzH" # os.environ.get("TICKETMASTER_API_KEY")
     if not api_key:
         raise ValueError("Please set the TICKETMASTER_API_KEY environment variable.")
     
@@ -128,10 +132,7 @@ def extract_data():
     print("Writing events to local CSV file...")
     datetime_now = datetime.datetime.now().strftime("%Y%m%d%HH")
     file_name = f"{datetime_now}_events.csv"
-    pd.DataFrame(parsed_events).to_csv(f"../data/{file_name}", index=False)
+    
+    pd.DataFrame(parsed_events).to_csv(file_name, index=False)
 
     print("Done!")
-
-
-if __name__ == '__main__':
-    extract_data()
