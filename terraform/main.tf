@@ -8,12 +8,11 @@ terraform {
 }
 
 provider "google" {
-#   credentials = file(var.credentials)
   project     = var.project
   region      = var.region
 }
 
-resource "google_storage_bucket" "ticketmaster-bucket-450016" {
+resource "google_storage_bucket" "tm_event_extractor-bucket" {
   name          = var.gcs_bucket_name
   location      = var.location
   force_destroy = true
@@ -29,7 +28,7 @@ resource "google_storage_bucket" "ticketmaster-bucket-450016" {
   }
 }
 
-resource "google_bigquery_dataset" "ticketmaster-dataset-450016" {
+resource "google_bigquery_dataset" "tm_event_extractor-dataset" {
   dataset_id                  = var.bq_dataset_name
   location                    = var.location
 }
