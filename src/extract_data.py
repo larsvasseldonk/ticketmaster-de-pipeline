@@ -130,9 +130,11 @@ def extract_data():
     parsed_events = ticketmaster_api.parse_events(events)
 
     print("Writing events to local CSV file...")
-    datetime_now = datetime.datetime.now().strftime("%Y%m%d%HH")
-    file_name = f"{datetime_now}_events.csv"
+    datetime_now = datetime.datetime.now()
+    file_name = f"{datetime_now.strftime("%Y%m%d%HH")}_events.csv"
     
-    pd.DataFrame(parsed_events).to_csv(file_name, index=False)
+    df_stg = pd.DataFrame(parsed_events)
+    df_stg["load_datetime"] = datetime_now
+    df_stg.to_csv(file_name, index=False)
 
     print("Done!")
