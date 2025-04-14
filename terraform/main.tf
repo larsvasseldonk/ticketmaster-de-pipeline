@@ -32,3 +32,18 @@ resource "google_bigquery_dataset" "ticketmaster-dataset-450016" {
   dataset_id                  = var.bq_dataset_name
   location                    = var.location
 }
+
+resource "google_cloudbuild_trigger" "ticketmaster_trigger" {
+  name = "tm-event-extractor-trigger"
+  location = var.location
+  filename = "tm_event_extractor/cloudbuild.yaml"
+
+  github {
+    name = "ticketmaster-de-pipeline"
+    owner = "larsvasseldonk"
+    push {
+      branch = "^feat/google_cloud_function$"
+      invert_regex = false
+    }
+  }
+}
