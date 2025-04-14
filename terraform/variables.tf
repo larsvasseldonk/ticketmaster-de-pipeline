@@ -1,8 +1,3 @@
-# variable "credentials" {
-#   description = "Credentials"
-#   default = "keys/google_creds.json"
-# }
-
 variable "project" {
     description = "Project"
     default = "sandbox-450016"
@@ -15,7 +10,7 @@ variable "region" {
 
 variable "location" {
     description = "Project Location"
-    default = "europe-west1"
+    default = "europe-west4"
 }
 
 variable "bq_dataset_name" {
