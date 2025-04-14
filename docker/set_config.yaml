@@ -1,0 +1,27 @@
+id: set_config
+namespace: ticketmaster
+
+tasks:
+  - id: gcp_project_id
+    type: io.kestra.plugin.core.kv.Set
+    key: GCP_PROJECT_ID
+    kvType: STRING
+    value: sandbox-450016
+
+  - id: gcp_location
+    type: io.kestra.plugin.core.kv.Set
+    key: GCP_LOCATION
+    kvType: STRING
+    value: europe-west4
+
+  - id: gcp_bucket_name
+    type: io.kestra.plugin.core.kv.Set
+    key: GCP_BUCKET_NAME
+    kvType: STRING
+    value: ticketmaster_bucket
+
+  - id: gcp_bigquery_dataset
+    type: io.kestra.plugin.core.kv.Set
+    key: GCP_BIGQUERY_DATASET
+    kvType: STRING
+    value: sandbox-450016.ticketmaster_dataset

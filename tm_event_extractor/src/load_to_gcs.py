@@ -7,10 +7,6 @@ from concurrent.futures import ThreadPoolExecutor
 from google.cloud import storage
 from google.api_core.exceptions import NotFound, Forbidden
 
-# from src.helper_functions import get_root_project_dir
-
-# ROOT_PROJECT_DIR = get_root_project_dir()
-
 
 class GCSUploader:
     """A class to handle file uploads to Google Cloud Storage."""
@@ -57,6 +53,7 @@ class GCSUploader:
     def verify_gcs_upload(self, blob_name: str) -> bool:
         """Verify if the blob exists in GCS."""
         blob = storage.Blob(bucket=self.bucket, name=blob_name)
+
         return blob.exists(self.client)
 
 
@@ -124,3 +121,7 @@ def load_to_gcs():
         delete_local_files(file_paths)
     else:
         print("No CSV files found to upload.")
+
+
+if __name__ == "__main__":
+    load_to_gcs()

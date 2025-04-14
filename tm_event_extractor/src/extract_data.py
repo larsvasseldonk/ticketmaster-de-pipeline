@@ -1,12 +1,8 @@
 import requests
 import datetime
-import os
+import logging
 
 import pandas as pd
-
-# from src.helper_functions import get_root_project_dir
-
-# ROOT_PROJECT_DIR = get_root_project_dir()
 
 
 class TicketmasterAPI:
@@ -56,11 +52,11 @@ class TicketmasterAPI:
             events = data.get("_embedded", {}).get("events", [])
 
             if not events:
-                print(f"No more events found on page {page_number}.")
+                logging.info(f"No more events found on page {page_number}.")
                 break
 
             yield data
-            print(f"Fetched {len(events)} events from page {page_number}.")
+            logging.info(f"Fetched {len(events)} events from page {page_number}.")
 
             page_number += 1
 
@@ -123,18 +119,21 @@ def extract_data():
         raise ValueError("Please set the TICKETMASTER_API_KEY environment variable.")
     
     ticketmaster_api = TicketmasterAPI(api_key)
-    print("Fetching events from Ticketmaster API...")
+    logging.info("Fetching events from Ticketmaster API...")
     events = ticketmaster_api.fetch_events()
 
-    print("Parsing events...")
+    logging.info("Parsing events...")
     parsed_events = ticketmaster_api.parse_events(events)
 
-    print("Writing events to local CSV file...")
+    logging.info("Writing events to local CSV file...")
     datetime_now = datetime.datetime.now()
     file_name = f"{datetime_now.strftime("%Y%m%d%HH")}_events.csv"
     
     df_stg = pd.DataFrame(parsed_events)
-    df_stg["load_datetime"] = datetime_now
     df_stg.to_csv(file_name, index=False)
 
-    print("Done!")
+    logging.info("Done!")
+
+
+if __name__ == "__main__":
+    extract_data()

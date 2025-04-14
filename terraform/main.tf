@@ -38,12 +38,11 @@ resource "google_cloudbuild_trigger" "ticketmaster_trigger" {
   location = var.location
   filename = "tm_event_extractor/cloudbuild.yaml"
 
-  github {
-    name = "ticketmaster-de-pipeline"
-    owner = "larsvasseldonk"
+  trigger_template {
+    branch_name = "^feat/google_cloud_function$"
+    invert_regex = false
     push {
       branch = "^feat/google_cloud_function$"
-      invert_regex = false
     }
   }
 }

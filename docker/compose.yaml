@@ -1,12 +1,26 @@
-version: '3.8'
+version: "3.8"
+
+volumes:
+  kestra-data:
+    driver: local
 
 services:
-  python-app:
-    image: python:3.9-slim
-    container_name: python-app-container
-    working_dir: /app
+  kestra:
+    image: kestra/kestra:latest
+    user: "root"
+    command: server standalone
     volumes:
-      - .:/app
-    # command: python extract_data.py
+      - kestra-data:/app/storage
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/kestra-wd:/tmp/kestra-wd
+      - ./path/to/your/repo:/scripts
+    ports:
+      - "8080:8080"
+      - "8081:8081"
     environment:
-      # - GOOGLE_APPLICATION_CREDENTIALS=/app/gcp.json
+      KESTRA_CONFIGURATION: |
+        kestra:
+          server:
+            basicAuth:
+              enabled: false
+            url: http://localhost:8080/

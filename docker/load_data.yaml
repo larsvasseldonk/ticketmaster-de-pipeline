@@ -1,0 +1,23 @@
+id: load_data
+namespace: ticketmaster
+
+tasks:
+  - id: workingDirectory
+    type: io.kestra.plugin.core.flow.WorkingDirectory
+    tasks:
+    - id: cloneRepository
+      type: io.kestra.plugin.git.Clone
+      url: https://github.com/larsvasseldonk/ticketmaster-de-pipeline
+      branch: main
+
+    - id: pythonScript
+      type: io.kestra.plugin.scripts.python.Commands
+      warningOnStdErr: false
+      docker:
+        image: ghcr.io/kestra-io/pydata:latest
+      beforeCommands:
+        - pip install -r requirements.txt > /dev/null
+      commands:
+        - python -m extract_data
+        - python -m load_to_gcs
+        - python -m load_to_bq
