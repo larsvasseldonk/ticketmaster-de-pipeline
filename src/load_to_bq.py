@@ -2,6 +2,8 @@ from google.cloud import bigquery, storage
 from google.api_core.exceptions import GoogleAPICallError, NotFound, BadRequest
 from concurrent.futures import ThreadPoolExecutor
 
+from os.path import basename
+
 import logging
 import datetime
 
@@ -17,7 +19,7 @@ class BigQueryLoader:
         self.client = bigquery.Client(project=project_id)
         self.project_id = project_id
 
-    def load_data(self, dataset_id: str, table_id: str, source_uri: str, schema: list, write_disposition: str = "WRITE_APPEND"):
+    def load_data(self, dataset_id: str, table_name: str, source_uri: str, schema: list, write_disposition: str = "WRITE_APPEND"):
         """
         Load data from a CSV file in Google Cloud Storage to BigQuery.
 
@@ -28,7 +30,15 @@ class BigQueryLoader:
         :param write_disposition: Write disposition for the load job (default is WRITE_APPEND).
         """
 
-        table_ref = f"{self.project_id}.{dataset_id}.{table_id}"
+        # Add SCD2 fields to schema
+        scd2_schema = schema + [
+            bigquery.SchemaField("effective_start_date", "TIMESTAMP"),
+            bigquery.SchemaField("effective_end_date", "TIMESTAMP"),
+            bigquery.SchemaField("is_current", "BOOLEAN")
+        ]
+
+        table_ref = f"{self.project_id}.{dataset_id}.stg_hist_{table_name}"
+        stg_table_ref = f"{self.project_id}.{dataset_id}.stg_{table_name}"
         logging.info(f"Starting data load from {source_uri} to BigQuery table {table_ref}...")
 
         job_config = bigquery.LoadJobConfig(
@@ -40,11 +50,71 @@ class BigQueryLoader:
         )
 
         try:
+            # Check if historical table exists, if not create it
+            try:
+                self.client.get_table(table_ref)
+            except NotFound:
+                logging.info(f"Creating table {table_ref}...")
+                table = bigquery.Table(table_ref, schema=scd2_schema)
+                self.client.create_table(table)
+
+            # 1. Load to stg table
             load_job = self.client.load_table_from_uri(
-                source_uri, table_ref, job_config=job_config
+                source_uri, stg_table_ref, job_config=job_config
             )
-            load_job.result()  # Wait for the job to complete
-            logging.info(f"Successfully loaded {load_job.output_rows} rows into {table_ref}.")
+            load_job.result()
+            logging.info(f"Successfully loaded {load_job.output_rows} rows into {stg_table_ref}")
+
+            # 2. Execute merge statement
+            merge_query = f"""
+            MERGE INTO `{table_ref}` T
+            USING (
+                SELECT *, 
+                CURRENT_TIMESTAMP() as effective_start_date,
+                CAST(NULL AS TIMESTAMP) as effective_end_date,
+                TRUE as is_current
+                FROM `{stg_table_ref}`
+            ) S
+            ON T.id = S.id AND T.is_current = TRUE
+            WHEN MATCHED AND (
+                T.name != S.name OR 
+                T.url != S.url OR
+                T.date != S.date OR
+                T.time != S.time OR
+                T.timezone != S.timezone OR
+                T.datetime != S.datetime OR
+                T.venue != S.venue OR 
+                T.city != S.city OR
+                T.country != S.country OR
+                T.postal_code != S.postal_code OR
+                T.latitude != S.latitude OR
+                T.longitude != S.longitude OR
+                T.address != S.address OR
+                T.promotor_id != S.promotor_id
+            ) THEN
+                UPDATE SET 
+                    is_current = FALSE,
+                    effective_end_date = CURRENT_TIMESTAMP()
+            WHEN NOT MATCHED THEN
+                INSERT (
+                    id, name, url, date, time, timezone, datetime,
+                    venue, city, country, postal_code, latitude, longitude,
+                    address, promotor_id, effective_start_date, 
+                    effective_end_date, is_current
+                )
+                VALUES (
+                    S.id, S.name, S.url, S.date, S.time, S.timezone, S.datetime,
+                    S.venue, S.city, S.country, S.postal_code, S.latitude, S.longitude,
+                    S.address, S.promotor_id, S.effective_start_date,
+                    S.effective_end_date, S.is_current
+                )
+            """
+            
+            query_job = self.client.query(merge_query)
+            query_job.result()
+
+            logging.info(f"Successfully processed SCD2 load for table {table_ref}")
+
         except NotFound as e:
             logging.error(f"Resource not found: {e}")
         except BadRequest as e:
@@ -73,13 +143,38 @@ def list_csv_files(bucket_name: str) -> list:
     return file_paths
 
 
+def move_file_to_archive(bucket_name: str, source_uri: str):
+    """Move the file to an archive location after processing."""
+
+    storage_client = storage.Client()
+    bucket = storage_client.get_bucket(bucket_name)
+    blob_name = basename(source_uri.replace(f"gs://{bucket_name}/", ""))
+    
+    source_blob = bucket.blob(blob_name)
+    destination_blob_name = f"archive/{blob_name}"
+
+    try:
+        logging.info(f"Moving {blob_name} to {destination_blob_name}...")
+
+        # Copy the blob to the new location
+        bucket.copy_blob(source_blob, bucket, destination_blob_name)
+
+        # Delete the original blob
+        source_blob.delete()
+
+    except Exception as e:
+        logging.error(f"Failed to move {source_blob} to archive: {e}")
+
+    logging.info(f"Moved {blob_name} to archive.")
+
+
 def load_to_bq():
     """Main function to run the data loader."""
 
     # Set example parameters
     project_id = "sandbox-450016"
     dataset_id = "ticketmaster_dataset"
-    table_id = "stg_hist_events"
+    table_name = "events"
     bucket_name = "ticketmaster_bucket"
     schema = [
         bigquery.SchemaField("id", "STRING"),
@@ -98,18 +193,22 @@ def load_to_bq():
         bigquery.SchemaField("address", "STRING"),
         bigquery.SchemaField("promotor_id", "STRING")
     ]
-    write_disposition = "WRITE_APPEND"  # Options: WRITE_APPEND, WRITE_TRUNCATE, WRITE_EMPTY
+    write_disposition = "WRITE_TRUNCATE"  # Options: WRITE_APPEND, WRITE_TRUNCATE, WRITE_EMPTY
 
     # Instantiate loader and load data
     loader = BigQueryLoader(project_id)
 
     file_paths = list_csv_files(bucket_name)
 
-    max_threads = 5
-    with ThreadPoolExecutor(max_threads) as executor:
-        for source_uri in file_paths:
-            # Load each CSV file to BigQuery
-            executor.submit(loader.load_data, dataset_id, table_id, source_uri, schema, write_disposition)
+    for source_uri in file_paths:
+        try:
+            # Load CSV file to BigQuery
+            loader.load_data(dataset_id, table_name, source_uri, schema, write_disposition)
+            # Only move to archive if load was successful
+            move_file_to_archive(bucket_name, source_uri)
+        except Exception as e:
+            logging.error(f"Failed to process {source_uri}: {e}")
+            continue
 
 
 if __name__ == "__main__":

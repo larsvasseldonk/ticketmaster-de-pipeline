@@ -1,8 +1,3 @@
-# variable "credentials" {
-#   description = "Credentials"
-#   default = "keys/google_creds.json"
-# }
-
 variable "project" {
     description = "Project"
     default = "sandbox-450016"

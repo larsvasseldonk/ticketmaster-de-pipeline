@@ -2,14 +2,11 @@ import os
 import sys
 import time
 import glob
+import logging
 
 from concurrent.futures import ThreadPoolExecutor
 from google.cloud import storage
 from google.api_core.exceptions import NotFound, Forbidden
-
-from src.helper_functions import get_root_project_dir
-
-ROOT_PROJECT_DIR = get_root_project_dir()
 
 
 class GCSUploader:
@@ -36,10 +33,10 @@ class GCSUploader:
 
         project_bucket_ids = [bucket.id for bucket in self.client.list_buckets()]
         if self.bucket_name not in project_bucket_ids:
-            print(f"Bucket '{self.bucket_name}' exists but does not belong to your project.")
+            logging.error(f"Bucket '{self.bucket_name}' exists but does not belong to your project.")
             sys.exit(1)
         else:
-            print(f"Bucket '{self.bucket_name}' exists and belongs to your project.")
+            logging.info(f"Bucket '{self.bucket_name}' exists and belongs to your project.")
     
 
     def _create_bucket(self):
@@ -47,10 +44,10 @@ class GCSUploader:
 
         try:
             bucket = self.client.create_bucket(self.bucket_name)
-            print(f"Created bucket '{self.bucket_name}'")
+            logging.info(f"Created bucket '{self.bucket_name}'")
             return bucket
         except Forbidden:
-            print(f"Cannot create the bucket '{self.bucket_name}'. Ensure you have permission.")
+            logging.info(f"Cannot create the bucket '{self.bucket_name}'. Ensure you have permission.")
             sys.exit(1)
 
 
@@ -68,21 +65,21 @@ class GCSUploader:
 
         for attempt in range(max_retries):
             try:
-                print(f"Uploading {file_path} to {self.bucket_name} (Attempt {attempt + 1})...")
+                logging.info(f"Uploading {file_path} to {self.bucket_name} (Attempt {attempt + 1})...")
                 blob.upload_from_filename(file_path)
-                print(f"Uploaded: gs://{self.bucket_name}/{blob_name}")
+                logging.info(f"Uploaded: gs://{self.bucket_name}/{blob_name}")
 
                 if self.verify_gcs_upload(blob_name):
-                    print(f"Verification successful for {blob_name}")
+                    logging.info(f"Verification successful for {blob_name}")
                     return
                 else:
-                    print(f"Verification failed for {blob_name}, retrying...")
+                    logging.error(f"Verification failed for {blob_name}, retrying...")
             except Exception as e:
-                print(f"Failed to upload {file_path} to GCS: {e}")
+                logging.error(f"Failed to upload {file_path} to GCS: {e}")
 
             time.sleep(5)
 
-        print(f"Giving up on {file_path} after {max_retries} attempts.")
+        logging.info(f"Giving up on {file_path} after {max_retries} attempts.")
 
 
 def upload_files(file_paths, bucket_name, credentials_file=None, max_retries=3, max_threads=5):
@@ -103,19 +100,19 @@ def get_file_paths(directory: str, pattern: str = "*.csv") -> list:
 def delete_local_files(file_paths: list):
     """Delete local files after uploading to GCS."""
 
-    print("Deleting local files...")
+    logging.info("Deleting local files...")
 
     for file_path in file_paths:
         try:
             os.remove(file_path)
-            print(f"Deleted local file: {file_path}")
+            logging.info(f"Deleted local file: {file_path}")
         except Exception as e:
-            print(f"Failed to delete {file_path}: {e}")
+            logging.error(f"Failed to delete {file_path}: {e}")
 
 
 def load_to_gcs():
 
-    file_paths = get_file_paths(os.path.join(ROOT_PROJECT_DIR, "data"), "*.csv")
+    file_paths = get_file_paths("", "*.csv")
     bucket_name = "ticketmaster_bucket"
 
     if file_paths:
@@ -123,7 +120,7 @@ def load_to_gcs():
         upload_files(file_paths, bucket_name, max_threads=5)
         delete_local_files(file_paths)
     else:
-        print("No CSV files found to upload.")
+        logging.info("No CSV files found to upload.")
 
 
 if __name__ == '__main__':
