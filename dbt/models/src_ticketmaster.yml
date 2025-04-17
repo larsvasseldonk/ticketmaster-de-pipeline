@@ -1,0 +1,6 @@
+version: 2
+
+sources:
+  - name: ticketmaster_dataset
+    tables:
+      - name: stg_hist_events
