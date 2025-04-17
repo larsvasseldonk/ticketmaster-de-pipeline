@@ -1,0 +1,57 @@
+version: 2
+
+sources:
+  - name: ticketmaster_dataset
+    tables:
+      - name: stg_hist_events
+
+models:
+  - name: fct_events
+    description: "Fact table containing Ticketmaster event data"
+    columns:
+      - name: fct_event_sk
+        description: "Unique identifier for the event"
+      - name: event_sk
+        description: "Surrogate key to connect to the dimevent dimension table"
+      - name: venue_sk
+        description: "Surrgate key to connect to the dimvenue dimension table"
+      - name: promotor_name
+        description: "Name of the promoter for the event"
+  - name: dim_event
+    description: "Dimension table containing event details"
+    columns:
+      - name: event_sk
+        description: "Surrogate key for the event"
+      - name: id
+        description: "Unique identifier for the event"
+      - name: name
+        description: "Name of the event"
+      - name: url
+        description: "URL for the event"
+      - name: date
+        description: "Date of the event"
+      - name: time
+        description: "Time of the event"
+      - name: timezone
+        description: "Timezone of the event"
+      - name: datetime
+        description: "Datetime of the event"
+  - name: dim_venue
+    description: "Dimension table containing venue details"
+    columns:
+      - name: venue_sk
+        description: "Surrogate key for the venue"
+      - name: venue
+        description: "Name of the venue"
+      - name: city
+        description: "City where the venue is located"
+      - name: country
+        description: "Country where the venue is located"
+      - name: postal_code
+        description: "Postal code of the venue"
+      - name: latitude
+        description: "Latitude of the venue"
+      - name: longitude
+        description: "Longitude of the venue"
+      - name: address
+        description: "Address of the venue"
