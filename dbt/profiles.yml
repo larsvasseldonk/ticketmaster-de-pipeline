@@ -1,0 +1,12 @@
+# Note that only one of these targets is required
+
+ticketmaster_dbt:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: oauth
+      project: sandbox-450016
+      dataset: ticketmaster_dataset # You can also use "schema" here
+      threads: 4 # Must be a value of 1 or greater 
+      OPTIONAL_CONFIG: VALUE
