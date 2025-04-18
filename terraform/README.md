@@ -1,4 +1,4 @@
-# Terrafrom
+# Terraform
 
 The Terraform scripts in this folder set up the required infrastructure for the Ticketmaster Event Extractor project. Below, you will find a brief overview of the components that are being created.
 
