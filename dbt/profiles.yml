@@ -7,6 +7,6 @@ ticketmaster_dbt:
       type: bigquery
       method: oauth
       project: sandbox-450016
-      dataset: ticketmaster_dataset # You can also use "schema" here
-      threads: 4 # Must be a value of 1 or greater 
+      dataset: ticketmaster_dataset_n
+      threads: 4
       OPTIONAL_CONFIG: VALUE

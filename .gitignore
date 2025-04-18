@@ -214,3 +214,5 @@ terraform.rc
 # Data files
 *.json
 *.csv
+
+.gc

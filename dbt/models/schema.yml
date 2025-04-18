@@ -1,7 +1,8 @@
 version: 2
 
 sources:
-  - name: ticketmaster_dataset
+  - name: ticketmaster_dataset_n
+    description: "Source data from Ticketmaster"
     tables:
       - name: stg_hist_events
 

@@ -8,6 +8,8 @@ from concurrent.futures import ThreadPoolExecutor
 from google.cloud import storage
 from google.api_core.exceptions import NotFound, Forbidden
 
+BQ_DATASET_NAME = os.environ.get("BQ_DATASET_NAME")
+GCS_BUCKET_NAME = os.environ.get("GCS_BUCKET_NAME")
 
 class GCSUploader:
     """A class to handle file uploads to Google Cloud Storage."""
@@ -113,7 +115,7 @@ def delete_local_files(file_paths: list):
 def load_to_gcs():
 
     file_paths = get_file_paths("", "*.csv")
-    bucket_name = "ticketmaster_bucket"
+    bucket_name = GCS_BUCKET_NAME
 
     if file_paths:
         # Upload files to GCS and delete local files
