@@ -34,7 +34,7 @@ class TicketmasterAPI:
         :param params: Additional parameters for the API request.
         :return: A list of events.
         """
-        
+
         page_number = 1
 
         if params is None:
@@ -65,7 +65,6 @@ class TicketmasterAPI:
 
             page_number += 1
 
-
     def fetch_events(self, items_per_page: int = 100, params: dict = None):
         """
         Fetches events from the Ticketmaster API.
@@ -80,8 +79,7 @@ class TicketmasterAPI:
             all_events.extend(data.get("_embedded", {}).get("events", []))
 
         return all_events
-    
-    
+
     def parse_events(self, events: list):
         """
         Parses the events and returns a list of dictionaries with relevant information.
@@ -116,10 +114,10 @@ class TicketmasterAPI:
             parsed_events.append(parsed_event)
 
         return parsed_events
-    
+
 
 def extract_data():
-    
+
     ticketmaster_api = TicketmasterAPI(TICKETMASTER_API_KEY)
     logging.info("Fetching events from Ticketmaster API...")
     events = ticketmaster_api.fetch_events()
@@ -130,12 +128,12 @@ def extract_data():
     logging.info("Writing events to local CSV file...")
     datetime_now = datetime.datetime.now()
     file_name = f"{datetime_now.strftime('%Y%m%d%HH')}_events.csv"
-    
+
     df_stg = pd.DataFrame(parsed_events)
     df_stg.to_csv(file_name, index=False)
 
     logging.info("Done!")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     extract_data()
