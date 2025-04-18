@@ -1,6 +1,6 @@
-# Ticketmaster Event Extracter (TEE)
+# Ticketmaster Event Extracter
 
-This project is designed to extract event data from the Ticketmaster API, transform it, and load it into Google Cloud Storage (GCS) and BigQuery. The pipeline is orchestrated on a daily basis using a Google Cloud Schedule. The data is then visualized using Metabase. The project is part of the Data Engineering Zoomcamp hosted by Alexey Grigorev.
+This project is designed to extract event data from the Ticketmaster API, transform it, and load it into Google Cloud Storage (GCS) and BigQuery. The pipeline is orchestrated on a daily basis using a Google Cloud Schedule. The data is then visualized using Metabase. The project is part of the [Data Engineering Zoomcamp](https://github.com/DataTalksClub/data-engineering-zoomcamp/tree/main) hosted by [Alexey Grigorev](https://alexeygrigorev.com/), a free nine-week course to learn more about the data engineering fundamentals.
 
 ## Table of Contents
 - [Project Overview](#project-overview)
