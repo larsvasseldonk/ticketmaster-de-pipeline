@@ -1,14 +1,17 @@
 from google.cloud import bigquery, storage
 from google.api_core.exceptions import GoogleAPICallError, NotFound, BadRequest
-from concurrent.futures import ThreadPoolExecutor
 
 from os.path import basename
+import os
 
 import logging
 import datetime
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
+
+BQ_DATASET_NAME = os.environ.get("BQ_DATASET_NAME")
+GCS_BUCKET_NAME = os.environ.get("GCS_BUCKET_NAME")
 
 
 class BigQueryLoader:
@@ -173,9 +176,9 @@ def load_to_bq():
 
     # Set example parameters
     project_id = "sandbox-450016"
-    dataset_id = "ticketmaster_dataset"
+    dataset_id = BQ_DATASET_NAME
     table_name = "events"
-    bucket_name = "ticketmaster_bucket"
+    bucket_name = GCS_BUCKET_NAME
     schema = [
         bigquery.SchemaField("id", "STRING"),
         bigquery.SchemaField("name", "STRING"),

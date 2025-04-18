@@ -5,6 +5,10 @@ import logging
 
 import pandas as pd
 
+TICKETMASTER_API_KEY = os.environ.get("TICKETMASTER_API_KEY")
+if not TICKETMASTER_API_KEY:
+    raise ValueError("Please set the TICKETMASTER_API_KEY environment variable.")
+
 
 class TicketmasterAPI:
     """
@@ -115,11 +119,8 @@ class TicketmasterAPI:
     
 
 def extract_data():
-    api_key = os.environ.get("TICKETMASTER_API_KEY")
-    if not api_key:
-        raise ValueError("Please set the TICKETMASTER_API_KEY environment variable.")
     
-    ticketmaster_api = TicketmasterAPI(api_key)
+    ticketmaster_api = TicketmasterAPI(TICKETMASTER_API_KEY)
     logging.info("Fetching events from Ticketmaster API...")
     events = ticketmaster_api.fetch_events()
 
@@ -128,7 +129,7 @@ def extract_data():
 
     logging.info("Writing events to local CSV file...")
     datetime_now = datetime.datetime.now()
-    file_name = f"{datetime_now.strftime("%Y%m%d%HH")}_events.csv"
+    file_name = f"{datetime_now.strftime('%Y%m%d%HH')}_events.csv"
     
     df_stg = pd.DataFrame(parsed_events)
     df_stg.to_csv(file_name, index=False)

@@ -9,7 +9,7 @@ WITH event_base AS (
     time,
     timezone,
     datetime
-  FROM {{ source('ticketmaster_dataset', 'stg_hist_events') }}
+  FROM {{ source('ticketmaster_dataset_n', 'stg_hist_events') }}
   WHERE is_current = TRUE
     AND id IS NOT NULL
 )

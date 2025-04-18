@@ -21,8 +21,7 @@ provider "registry.terraform.io/hashicorp/archive" {
 }
 
 provider "registry.terraform.io/hashicorp/google" {
-  version     = "6.30.0"
-  constraints = ">= 4.34.0"
+  version = "6.30.0"
   hashes = [
     "h1:yb0p5GeexuGrL1vTkLDo59h1nCW57kseVMmLnvIQZFc=",
     "zh:1142610145b7b7a723f2523074c32ce3ff64120125d99ebee244f6e23b252253",

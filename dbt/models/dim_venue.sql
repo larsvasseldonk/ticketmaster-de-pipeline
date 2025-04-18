@@ -9,7 +9,7 @@ WITH venue_base AS (
     latitude,
     longitude,
     address
-  FROM {{ source('ticketmaster_dataset', 'stg_hist_events') }}
+  FROM {{ source('ticketmaster_dataset_n', 'stg_hist_events') }}
   WHERE is_current = TRUE
     AND venue IS NOT NULL
 )
