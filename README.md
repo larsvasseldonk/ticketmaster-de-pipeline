@@ -4,7 +4,10 @@ This project is designed to extract event data from the Ticketmaster API, transf
 
 ## Table of Contents
 - [Project Overview](#project-overview)
-- [Technologies Used](#technologies-used)
+    - [Problem Statement](#problem-statement)
+    - [High-Level Architecture](#high-level-architecture)
+    - [Project Structure](#project-structure)
+    - [Technologies Used](#technologies-used)
 - [Setup Instructions](#setup-instructions)
 - [Repo Structure](#repo-structure)
 - [References](#references)
@@ -92,12 +95,12 @@ The project is structured into several directories, each serving a specific purp
 
 ### Steps to reproduce the project
 
-1. **Clone the Repository**: 
-    ```bash
-    git clone https://github.com/larsvasseldonk/ticketmaster-de-pipeline.git
-    cd ticketmaster-de-pipeline
-    ```
-2. **Authenticate your Google Cloud account**
+#### 1. **Clone the Repository**: 
+```bash
+git clone https://github.com/larsvasseldonk/ticketmaster-de-pipeline.git
+cd ticketmaster-de-pipeline
+```
+#### 2. **Authenticate your Google Cloud account**
 - Make sure you have the Google Cloud SDK installed
 - Run `gcloud init` to initialize or reinitialize gcloud 
 - Run `gcloud auth login` to authenticate your Google Cloud account
@@ -107,14 +110,14 @@ The project is structured into several directories, each serving a specific purp
     - Cloud Storage API
     - Cloud Scheduler API
  
-3. **Build the infastructure with Terraform**:
-    - Make sure you have Terraform installed:
-        - For Mac users, use: `brew install terraform`
-    - Navigate to the `terraform` directory: `cd terraform`
-    - Update the `project_id` variable in `variables.tf`
-    - Initialize Terraform: `terraform init`
-    - Plan the infrastructure: `terraform plan`
-    - Apply the infrastructure: `terraform apply`
+#### 3. **Build the infastructure with Terraform**:
+- Make sure you have Terraform installed:
+    - For Mac users, use: `brew install terraform`
+- Navigate to the `terraform` directory: `cd terraform`
+- Update the `project_id` variable in `variables.tf`
+- Initialize Terraform: `terraform init`
+- Plan the infrastructure: `terraform plan`
+- Apply the infrastructure: `terraform apply`
 
 After following these steps, your GCP project should contain the following resources:
 - A Cloud Run service for the data extraction and loading tasks.
@@ -122,15 +125,15 @@ After following these steps, your GCP project should contain the following resou
 - A BigQuery dataset for storing the transformed data.
 - A Cloud Scheduler job for scheduling the data extraction and loading tasks. This job will run daily at 00:00 UTC.
 
-4. **Run the data pipeline**:
-You can manually trigger the Cloud Run service by sending a POST request to the service URL. The URL can be found in the GCP Console under "Cloud Run". After doing this, you should see the raw data in the GCS bucket in the `archive` folder. When it is in the `archive` folder it means the data is successfully loaded into the BigQuery dataset. In BigQuery you can find the data in the `ticketmaster` dataset under the `stg_hist_events` table. In this table Slowly Changing Dimensions (SCD) are used to keep track of the changes in the data. To only keep the latest version of the data, make sure to set `is_current` to `true` in the `stg_hist_events` table.
+#### 4. **Run the data pipeline**:
+You can manually trigger the Cloud Run service by sending a POST request to the service URL. The URL can be found in the GCP Console under "Cloud Run". After doing this, you should see the raw data in the GCS bucket in the `archive` folder. When it is in the `archive` folder it means the data is successfully loaded into the BigQuery dataset. In BigQuery you can find the data in the `ticketmaster` dataset under the `stg_hist_events` table. In this table Slowly Changing Dimensions (SCD) type 2 are used to keep track of the changes in the data. To only keep the latest version of the data, make sure to set `is_current` to `true` in the `stg_hist_events` table.
 
-5. **Run DBT to transform the data into a dimensional model**:
+#### 5. **Run DBT to transform the data into a dimensional model**:
 - Make sure you have DBT installed and configured.
     - Install DBT with the BigQuery adapter:
-      ```bash
-      pip install dbt-bigquery
-      ```
+```bash
+pip install dbt-bigquery
+```
 - Navigate to the `dbt` directory: `cd dbt`
 - Update the `profiles.yml` file with your BigQuery credentials.
 - Run `dbt deps` to install the required dependencies.
@@ -142,7 +145,7 @@ You can manually trigger the Cloud Run service by sending a POST request to the 
     - `dim_venue`: Dimensional table for venues
     - `fct_events`: Fact table for events
 
-5. **Visualize data with MetaBase**:
+#### 5. **Visualize data with MetaBase**:
 - Install Metabase using Docker:
     - Navigate to the `dashboard` directory: `cd dashboard`
     - Build the Docker image with docker-compose: `docker-compose build`
@@ -150,34 +153,36 @@ You can manually trigger the Cloud Run service by sending a POST request to the 
 - Open your browser and go to `http://localhost:3000`.
 - Follow the setup instructions to connect to your BigQuery dataset.
 - Create a new dashboard and add two new visualizations:
-    - A [sankey chart](https://en.wikipedia.org/wiki/Sankey_diagram) that shows in which city and venue the events are happening:
-        ```sql
-        SELECT
-            dv.venue,
-            dv.city,
-            count(*) AS n_events
-        FROM ticketmaster_dataset_n.fct_events fe
-        LEFT JOIN ticketmaster_dataset_n.dim_event de ON fe.event_sk = de.event_sk
-        LEFT JOIN ticketmaster_dataset_n.dim_venue dv ON fe.venue_sk = dv.venue_sk
-        WHERE venue != ''
-        GROUP BY ALL
-        ```
-    - A line chart that shows the distribution of the events across weeks:
-        ```sql
-        SELECT 
-            EXTRACT(WEEK FROM date) AS week,
-            COUNT(*) AS n_events
-        FROM ticketmaster_dataset_n.fct_events fe
-        LEFT JOIN ticketmaster_dataset_n.dim_event de ON fe.event_sk = de.event_sk
-        LEFT JOIN ticketmaster_dataset_n.dim_venue dv ON fe.venue_sk = dv.venue_sk
-        GROUP BY ALL
-        ```
 
-A screenshot of my dashboard can be found in the `dashboard` directory. You can use this as a reference to create your own dashboard.
+__A [sankey chart](https://en.wikipedia.org/wiki/Sankey_diagram) that shows in which city and venue the events are happening:__
+```sql
+SELECT
+    dv.venue,
+    dv.city,
+    count(*) AS n_events
+FROM ticketmaster_dataset_n.fct_events fe
+LEFT JOIN ticketmaster_dataset_n.dim_event de ON fe.event_sk = de.event_sk
+LEFT JOIN ticketmaster_dataset_n.dim_venue dv ON fe.venue_sk = dv.venue_sk
+WHERE venue != ''
+GROUP BY ALL
+```
+
+__A line chart that shows the distribution of the events across weeks:__
+```sql
+SELECT 
+    EXTRACT(WEEK FROM date) AS week,
+    COUNT(*) AS n_events
+FROM ticketmaster_dataset_n.fct_events fe
+LEFT JOIN ticketmaster_dataset_n.dim_event de ON fe.event_sk = de.event_sk
+LEFT JOIN ticketmaster_dataset_n.dim_venue dv ON fe.venue_sk = dv.venue_sk
+GROUP BY ALL
+```
+
+A screenshot of my dashboard is shown below. You can use this as a reference to create your own dashboard.
 
 ![dashboard](imgs/ticketmaster-dashboard.png "Ticketmaster Dashboard")
 
-6. **Remove the resources**
+#### 6. **Remove the resources**
 
 After you are done with the project, you can remove the resources to avoid unnecessary costs. You can do this by running the following commands:
 - To stop the Metabase container, run: `docker-compose down`
@@ -190,3 +195,4 @@ To improve this project, the following steps can be taken:
 - Extract more information from the API request to enrich the dataseet.
 - Schedule the DBT jobs to run automatically after the data is loaded into BigQuery.
 - Deploy the Metabase dashboard to a cloud service for easier access.
+- Add the API key to a secret manager for better security.
